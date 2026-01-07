@@ -51,3 +51,87 @@ new Promise((resolve, reject) => {
   .finally(() => alert("Promise ready")) // triggers first
   .then(result => alert(result)); // <-- .then shows "value"
 ```
+
+## Promises chaining
+Every call to a `.then` returns a new promise, so that we can call the next `.then` on it. When a handler returns a value, it becomes the result of that promise, so the next `.then` is called with it. Example:
+```js
+new Promise(function(resolve, reject) {
+
+  setTimeout(() => resolve(1), 1000);
+
+}).then(function(result) {
+
+  console.log(result); // 1
+  return result * 2;
+
+}).then(function(result) {
+
+  console.log(result); // 2
+  return result * 2;
+
+}).then(function(result) {
+
+  console.log(result); // 4
+  return result * 2;
+
+});
+```
+### Adding many `.then` to a single promise
+> ❗ Adding many `.then` to a single promise is not the same as chaining. 
+
+In the example below, the result isn't passed through the chain of `.then`-handlers:
+```js
+let promise = new Promise(function(resolve, reject) {
+  setTimeout(() => resolve(1), 1000);
+});
+
+promise.then(function(result) {
+  console.log(result); // 1
+  return result * 2;
+});
+
+promise.then(function(result) {
+  console.log(result); // 1
+  return result * 2;
+});
+
+promise.then(function(result) {
+  console.log(result); // 1
+  return result * 2;
+});
+```
+
+## Network requests: `fetch`
+The `fetch(url)` method makes a network request to the `url` and returns a promise. The promise resolves with a `response` object when the remote server responds with headers, but *before the full response is downloaded*.
+
+To read the full response, we should call the method `response.text()`: it returns a promise that resolves when the full text is downloaded from the remote server, with that text as a result.
+
+### Using `response.text`
+Reads the remote data. Returns a promise that resolves when the full text is downloaded from the remote server, with that text as a result.
+```js
+fetch('/article/promise-chaining/user.json')
+  // .then below runs when the remote server responds
+  .then(function(response) {
+    // response.text() returns a new promise that resolves with the full
+    // response text when it loads
+    return response.text();
+  })
+  .then(function(text) {
+    // ...and here's the content of the remote file
+    console.log(text); // {"name": "iliakan", "isAdmin": true}
+  });
+```
+
+### Using `response.json`
+This reads the remote data and parses it as JSON. It returns a promise that resolves when the full text is downloaded from the remote server AND is fully parsed as JSON, with that JSON as a result.
+```js
+// same as above, but response.json() parses the remote content as JSON
+fetch('/article/promise-chaining/user.json')
+  .then(response => response.json())
+  .then(user => console.log(user.name)); // iliakan, got user name
+```
+
+## Promise chaining - good practice
+As a good practice, an asynchronous action should always return a promise. That makes it possible to plan actions after it; even if we don’t plan to extend the chain now, we may need it later.
+
+Example: see [fetch_example.js](./3%20-%20Promise%20Chaining/fetch_example.js).
