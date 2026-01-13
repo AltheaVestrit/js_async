@@ -135,3 +135,48 @@ fetch('/article/promise-chaining/user.json')
 As a good practice, an asynchronous action should always return a promise. That makes it possible to plan actions after it; even if we don’t plan to extend the chain now, we may need it later.
 
 Example: see [fetch_example.js](./3%20-%20Promise%20Chaining/fetch_example.js).
+
+## Error handling with promises
+* `.catch` handles errors in promises of all kinds: be it a `reject()` call, or an error thrown in a handler.
+* `.then` also catches errors in the same manner, if given the second argument (which is the error handler).
+* We should place `.catch` exactly in places where we want to handle errors and know how to handle them. The handler should analyze errors (custom error classes help) and rethrow unknown ones (maybe they are programming mistakes) (see [error_example.js](./4%20-%20Error%20Handling/error_example.js)).
+* It’s ok not to use `.catch` at all, if there’s no way to recover from an error.
+* In any case we should have the `unhandledrejection` event handler (for browsers, and analogs for other environments) to track unhandled errors and inform the user (and probably our server) about them, so that our app never “just dies”.
+
+## Methods of Promise class
+There are 6 static methods of Promise class:
+* `Promise.all(promises)` – waits for all promises to resolve and returns an array of their results. If any of the given promises rejects, it becomes the error of `Promise.all`, and all other results are ignored.
+* `Promise.allSettled(promises)` (recently added method) – waits for all promises to settle and returns their results as an array of objects with:
+  * status: `"fulfilled"` or `"rejected"`
+  * `value` (if fulfilled) or `reason` (if rejected).
+* `Promise.race(promises)` – waits for the first promise to settle, and its result/error becomes the outcome.
+* `Promise.any(promises)` (recently added method) – waits for the first promise to fulfill, and its result becomes the outcome. If all of the given promises are rejected, then the returned promise is rejected with AggregateError – a special error object that stores all promise errors in its errors property.
+* `Promise.resolve(value)` – makes a resolved promise with the given value.
+* `Promise.reject(error)` – makes a rejected promise with the given error.
+
+Where `promises` is an iterable, usually an array of promises. "Normal" values (like 1, "string" etc.) are also allowed in the iterable.
+
+## Async / await
+### Async
+The word “async” before a function (or a class method) means one simple thing: a function always returns a promise. Other values are wrapped in a resolved promise automatically. Syntax:
+```js
+async function f() {
+  return 1;
+}
+```
+### Await
+The keyword `await` can only be used in async funcions. Its use before a promise (or actually any "thenable") makes JavaScript wait until that promise settles, and then:
+
+* If it’s an error, an exception is generated — same as if throw error were called at that very place.
+* Otherwise, it returns the result.
+
+If we’re not using modules, or older browsers must be supported, there’s a universal recipe: wrapping into an anonymous async function.
+
+Like this:
+```js
+(async () => {
+  let response = await fetch('/article/promise-chaining/user.json');
+  let user = await response.json();
+  ...
+})();
+```
